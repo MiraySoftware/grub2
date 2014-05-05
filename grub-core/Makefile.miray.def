@@ -8,3 +8,10 @@ module = {
   efi = miray/commands/boothelper_efi.c;
   efi = miray/lib/efi.c;
 };
+
+
+module = {
+  name = lzmaio;
+  common = miray/io/lzmaio.c;
+  common = lib/LzmaDec.c;
+};
