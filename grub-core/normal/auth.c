@@ -208,8 +208,14 @@ grub_auth_check_authentication (const char *userlist)
   static unsigned long punishment_delay = 1;
   char entered[GRUB_AUTH_MAX_PASSLEN];
   struct grub_auth_user *user;
+  const char *debugmode;
 
   grub_memset (login, 0, sizeof (login));
+
+  /* Completely lock down all restricted targets */
+  debugmode = grub_env_get("debugmode");
+  if (debugmode == 0)
+    return GRUB_ACCESS_DENIED;
 
   if (is_authenticated (userlist))
     {
