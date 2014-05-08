@@ -25,5 +25,6 @@
 
 /* Functions.  */
 int EXPORT_FUNC (grub_efi_secure_boot) (void);
+int EXPORT_FUNC (grub_efi_secure_validate) (void *buffer, grub_uint32_t size);
 
 #endif /* ! GRUB_EFI_SB_HEADER */

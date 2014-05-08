@@ -62,3 +62,39 @@ grub_efi_secure_boot (void)
   return 0;
 #endif
 }
+
+struct grub_efi_shim_lock
+{
+  grub_efi_status_t (*verify) (void *buffer, grub_uint32_t size);
+};
+typedef struct grub_efi_shim_lock grub_efi_shim_lock_t;
+
+#ifdef GRUB_MACHINE_EFI
+int
+grub_efi_secure_validate(void * buffer, grub_uint32_t size)
+{
+  grub_efi_guid_t guid = GRUB_EFI_SHIM_LOCK_GUID;
+  grub_efi_shim_lock_t *shim_lock;
+  grub_efi_status_t status;
+
+  shim_lock = grub_efi_locate_protocol(&guid, NULL);
+
+  if (!shim_lock)
+    return 0;
+
+  status = shim_lock->verify(buffer, size);
+  if (status == GRUB_EFI_SUCCESS)
+    return 1;
+
+  grub_printf("Verification failed: %d\n", (int)status);
+  
+  return 0;
+}
+#else
+int
+grub_efi_secure_validate(void * buffer __attribute__((unused)), grub_uint32_t size __attribute__((unused)))
+{
+  return 0;
+} 
+#endif
+
