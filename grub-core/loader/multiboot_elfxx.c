@@ -34,6 +34,11 @@
 #error "I'm confused"
 #endif
 
+#ifdef GRUB_MACHINE_EFI
+#include <grub/efi/efi.h>
+#include <grub/efi/sb.h>
+#endif
+
 #include <grub/i386/relocator.h>
 
 #define CONCAT(a,b)	CONCAT_(a, b)
@@ -60,6 +65,13 @@ CONCAT(grub_multiboot_load_elf, XX) (mbi_load_data_t *mld)
   grub_uint32_t load_offset, load_size;
   int i;
   void *source;
+
+#if defined(GRUB_MACHINE_EFI)
+      if (grub_efi_secure_boot())
+      {
+         return grub_error(GRUB_ERR_BAD_SIGNATURE, "Cannot verify elf file");
+      }
+#endif
 
   if (ehdr->e_ident[EI_MAG0] != ELFMAG0
       || ehdr->e_ident[EI_MAG1] != ELFMAG1

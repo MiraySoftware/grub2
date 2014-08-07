@@ -39,6 +39,7 @@
 
 #ifdef GRUB_MACHINE_EFI
 #include <grub/efi/efi.h>
+#include <grub/efi/sb.h>
 #endif
 
 /* The bits in the required part of flags field we don't support.  */
@@ -113,6 +114,40 @@ load_kernel (grub_file_t file, const char *filename,
 	}
       source = get_virtual_current_address (ch);
 
+ #if defined(GRUB_MACHINE_EFI)
+   if (grub_efi_secure_boot())
+   {
+      void * secureBuffer;
+      if (grub_file_seek (file, 0) == (grub_off_t) -1)
+      {
+         return grub_errno;
+      }
+
+      secureBuffer = grub_malloc(file->size);
+      if (secureBuffer == 0)
+      {
+         return grub_error(GRUB_ERR_OUT_OF_MEMORY, "Could not allocate memory for check buffer");
+      }
+
+      grub_file_read (file, secureBuffer, file->size);
+      if (grub_errno)
+      {
+         grub_free(secureBuffer);
+         return grub_errno;
+      }
+
+      if (!grub_efi_secure_validate(secureBuffer, file->size))
+      {
+         grub_free(secureBuffer);
+         return grub_error(GRUB_ERR_BAD_SIGNATURE, "Could not verify boot image");
+      }
+
+      grub_memcpy(source, &(((grub_uint8_t *)secureBuffer)[offset]), code_size);
+      grub_free(secureBuffer);
+   }
+   else
+#endif
+   {
       if ((grub_file_seek (file, offset)) == (grub_off_t) -1)
 	{
 	  return grub_errno;
@@ -121,14 +156,23 @@ load_kernel (grub_file_t file, const char *filename,
       grub_file_read (file, source, load_size);
       if (grub_errno)
 	return grub_errno;
-
+    }
+    
       if (header->bss_end_addr)
 	grub_memset ((grub_uint8_t *) source + load_size, 0,
 		     header->bss_end_addr - header->load_addr - load_size);
 
       grub_multiboot_payload_eip = header->entry_addr;
       return GRUB_ERR_NONE;
-    }
+
+   }
+
+#if defined(GRUB_MACHINE_EFI)
+      if (grub_efi_secure_boot())
+      {
+         return grub_error(GRUB_ERR_BAD_SIGNATURE, "Cannot verify elf file");
+      }
+#endif
 
   return grub_multiboot_load_elf (&mld);
 }

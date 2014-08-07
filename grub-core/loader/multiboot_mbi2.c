@@ -39,6 +39,7 @@
 
 #if defined (GRUB_MACHINE_EFI)
 #include <grub/efi/efi.h>
+#include <grub/efi/sb.h>
 #endif
 
 #if defined (GRUB_MACHINE_PCBIOS) || defined (GRUB_MACHINE_COREBOOT) || defined (GRUB_MACHINE_MULTIBOOT) || defined (GRUB_MACHINE_QEMU)
@@ -321,6 +322,44 @@ grub_multiboot_load (grub_file_t file, const char *filename)
 	grub_dprintf ("multiboot_loader", "align=0x%lx, preference=0x%x, avoid_efi_boot_services=%d\n",
 		      (long) mld.align, mld.preference, keep_bs);
 
+#if defined(GRUB_MACHINE_EFI)
+   if (grub_efi_secure_boot())
+   {
+      void * secureBuffer;
+      if (grub_file_seek (file, 0) == (grub_off_t) -1)
+      {
+         grub_free (mld.buffer);
+         return grub_errno;
+      }
+
+      secureBuffer = grub_malloc(file->size);
+      if (secureBuffer == 0)
+      {
+         grub_free (mld.buffer);
+         return grub_error(GRUB_ERR_OUT_OF_MEMORY, "Could not allocate memory for check buffer");
+      }
+
+      grub_file_read (file, secureBuffer, file->size);
+      if (grub_errno)
+      {
+         grub_free(secureBuffer);
+         grub_free(mld.buffer);
+         return grub_errno;
+      }
+
+      if (!grub_efi_secure_validate(secureBuffer, file->size))
+      {
+         grub_free(secureBuffer);
+         grub_free(mld.buffer);
+         return grub_error(GRUB_ERR_BAD_SIGNATURE, "Could not verify boot image");
+      }
+
+      grub_memcpy(source, &(((grub_uint8_t *)secureBuffer)[offset]), code_size);
+      grub_free(secureBuffer);
+   }
+   else
+#endif				
+	{
       if ((grub_file_seek (file, offset)) == (grub_off_t) -1)
 	{
 	  grub_free (mld.buffer);
@@ -333,6 +372,7 @@ grub_multiboot_load (grub_file_t file, const char *filename)
 	  grub_free (mld.buffer);
 	  return grub_errno;
 	}
+   }
 
       if (addr_tag->bss_end_addr)
 	grub_memset ((grub_uint8_t *) source + load_size, 0,
@@ -340,6 +380,15 @@ grub_multiboot_load (grub_file_t file, const char *filename)
     }
   else
     {
+#if defined(GRUB_MACHINE_EFI)
+      if (grub_efi_secure_boot())
+      {
+         err = grub_error(GRUB_ERR_BAD_SIGNATURE, "Cannot verify elf file");
+         grub_free(mld.buffer);
+         return err;
+      }
+#endif
+
       mld.file = file;
       mld.filename = filename;
       mld.avoid_efi_boot_services = keep_bs;
