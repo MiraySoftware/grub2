@@ -33,6 +33,7 @@
 #include <grub/charset.h>
 #include <grub/script_sh.h>
 #include <grub/bufio.h>
+#include <grub/miray_debug.h>
 
 GRUB_MOD_LICENSE ("GPLv3+");
 
@@ -40,6 +41,9 @@ GRUB_MOD_LICENSE ("GPLv3+");
 
 static int nested_level = 0;
 int grub_normal_exit_level = 0;
+
+grub_err_t (*custom_menu_handler) (grub_menu_t menu, int nested, int auto_boot) = NULL;
+
 
 void
 grub_normal_free_menu (grub_menu_t menu)
@@ -102,7 +106,7 @@ read_config_file_getline (char **line, int cont __attribute__ ((unused)),
   return GRUB_ERR_NONE;
 }
 
-static grub_menu_t
+grub_menu_t
 read_config_file (const char *config)
 {
   grub_file_t rawfile, file;
@@ -202,19 +206,23 @@ grub_normal_init_page (struct grub_term_output *term,
 {
   grub_ssize_t msg_len;
   int posx;
-  char *msg_formatted;
+  //char *msg_formatted;
+  const char *msg_formatted;
   grub_uint32_t *unicode_msg;
   grub_uint32_t *last_position;
  
-  grub_term_cls (term);
+  //grub_term_cls (term);
 
-  msg_formatted = grub_xasprintf (_("GNU GRUB  version %s"), PACKAGE_VERSION);
-  if (!msg_formatted)
-    return;
+  //msg_formatted = grub_xasprintf (_("GNU GRUB  version %s"), PACKAGE_VERSION);
+  //if (!msg_formatted)
+  //  return;
+  msg_formatted = grub_env_get("menu_title");
+  if (msg_formatted == 0)
+    msg_formatted = "Symobi - Extended Boot Options";
  
   msg_len = grub_utf8_to_ucs4_alloc (msg_formatted,
   				     &unicode_msg, &last_position);
-  grub_free (msg_formatted);
+  //grub_free (msg_formatted);
  
   if (msg_len < 0)
     {
@@ -243,7 +251,9 @@ read_lists (const char *val)
       read_crypto_list (val);
       read_terminal_list (val);
     }
-  grub_gettext_reread_prefix (val);
+#if defined (ENABLE_NLS)
+    grub_gettext_reread_prefix (val);
+#endif
 }
 
 static char *
@@ -287,7 +297,8 @@ grub_normal_execute (const char *config, int nested, int batch)
 	{
 
 	  grub_boot_time ("Entering menu");
-	  grub_show_menu (menu, nested, 0);
+	  if (!custom_menu_handler || (custom_menu_handler(menu, nested, 0) == 0))
+	    grub_show_menu (menu, nested, 0);
 	  if (nested)
 	    grub_normal_free_menu (menu);
 	}
@@ -369,6 +380,8 @@ grub_normal_reader_init (int nested)
 
   FOR_ACTIVE_TERM_OUTPUTS(term)
   {
+    grub_term_cls(term);
+     
     grub_normal_init_page (term, 1);
     grub_term_setcursor (term, 1);
 
@@ -436,7 +449,8 @@ grub_cmdline_run (int nested, int force_auth)
 
   if (err)
     {
-      grub_print_error ();
+      if (miray_debugmode())
+        grub_print_error ();
       grub_errno = GRUB_ERR_NONE;
       return;
     }
@@ -537,7 +551,7 @@ GRUB_MOD_INIT(normal)
   grub_env_export ("color_highlight");
 
   /* Set default color names.  */
-  grub_env_set ("color_normal", "light-gray/black");
+  grub_env_set ("color_normal", "white/black");
   grub_env_set ("color_highlight", "black/light-gray");
 
   for (i = 0; i < ARRAY_SIZE (features); i++)
