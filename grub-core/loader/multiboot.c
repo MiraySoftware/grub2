@@ -43,6 +43,7 @@
 #include <grub/memory.h>
 #include <grub/i18n.h>
 #include <grub/efi/sb.h>
+#include <grub/miray_debug.h>
 
 GRUB_MOD_LICENSE ("GPLv3+");
 
@@ -231,7 +232,8 @@ grub_multiboot_set_console (int console_type, int accepted_consoles,
       if (console_required)
 	return grub_error (GRUB_ERR_BAD_OS,
 			   "OS requires a console but none is available");
-      grub_puts_ (N_("WARNING: no console will be available to OS"));
+      if (miray_debugmode())
+        grub_puts_ (N_("WARNING: no console will be available to OS"));
       accepts_video = 0;
       accepts_ega_text = 0;
       return GRUB_ERR_NONE;
