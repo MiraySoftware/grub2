@@ -161,6 +161,8 @@ draw_border (struct grub_term_output *term, const struct grub_term_screen_geomet
 			 + GRUB_TERM_MARGIN + 1) });
 }
 
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+
 static int
 print_message (int nested, int edit, struct grub_term_output *term, int dry_run)
 {
@@ -219,6 +221,8 @@ command-line or ESC to discard edits and return to the GRUB menu."),
     }
   return ret;
 }
+
+#pragma GCC diagnostic error "-Wformat-nonliteral"
 
 static void
 print_entry (int y, int highlight, grub_menu_entry_t entry,
