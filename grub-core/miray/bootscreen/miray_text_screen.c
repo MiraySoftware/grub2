@@ -29,6 +29,7 @@
 #include "miray_screen.h"
 #include "text_progress_bar.h"
 
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 
 /* Constants for bootscreen */
 static const unsigned int miray_pos_logo_top = 3;

@@ -33,6 +33,8 @@
 
 #define MAX_MENU_ENTRIES 10
 
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+
 static const unsigned label_height = 20;
 
 static const char * darkgray_c  = "#202020ff";
