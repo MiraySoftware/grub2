@@ -698,10 +698,8 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
   using_linuxefi = 0;
   if (grub_efi_secure_boot ())
     {
-      /* Try linuxefi first, which will require a successful signature check
-	 and then hand over to the kernel without calling ExitBootServices.
-	 If that fails, however, fall back to calling ExitBootServices
-	 ourselves and then booting an unsigned kernel.  */
+      /* Forward all linux loader calls to linuxefi. Return an error 
+		 if linuxefi fails or is not available */
       grub_dl_t mod;
       grub_command_t linuxefi_cmd;
 
@@ -723,9 +721,12 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 		  return GRUB_ERR_NONE;
 		}
 	      grub_dprintf ("linux", "linuxefi failed (%d)\n", grub_errno);
-	      grub_errno = GRUB_ERR_NONE;
+	      goto fail;
 	    }
 	}
+	// Fail if linuxefi module was not found or if the linuxefi and initrdefi methods were not available
+	grub_error (GRUB_ERR_ACCESS_DENIED, N_("linuxefi missing"));
+	goto fail;
     }
 #endif
 
@@ -1194,8 +1195,10 @@ static grub_command_t cmd_linux, cmd_initrd;
 
 GRUB_MOD_INIT(linux)
 {
-  if (grub_efi_secure_boot())
-    return;
+  // We forward all calls to linuxefi, so disabling the module is not necessary
+
+  //if (grub_efi_secure_boot())
+  //  return;
 
   cmd_linux = grub_register_command ("linux", grub_cmd_linux,
 				     0, N_("Load Linux."));
@@ -1206,8 +1209,8 @@ GRUB_MOD_INIT(linux)
 
 GRUB_MOD_FINI(linux)
 {
-  if (grub_efi_secure_boot())
-    return;
+  //if (grub_efi_secure_boot())
+  //  return;
 
   grub_unregister_command (cmd_linux);
   grub_unregister_command (cmd_initrd);
