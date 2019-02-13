@@ -577,6 +577,13 @@ grub_video_gop_get_info_and_fini (struct grub_video_mode_info *mode_info,
   return GRUB_ERR_NONE;
 }
 
+static void *
+grub_video_gop_get_fb (void)
+{
+  return (char *) framebuffer.ptr;
+}
+
+
 static struct grub_video_adapter grub_video_gop_adapter =
   {
     .name = "EFI GOP driver",
@@ -612,6 +619,7 @@ static struct grub_video_adapter grub_video_gop_adapter =
     .set_active_render_target = grub_video_gop_set_active_render_target,
     .get_active_render_target = grub_video_fb_get_active_render_target,
     .iterate = grub_video_gop_iterate,
+    .get_fb = grub_video_gop_get_fb,
 
     .next = 0
   };
