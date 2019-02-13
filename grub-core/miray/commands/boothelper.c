@@ -31,6 +31,7 @@
 #include <grub/acpi.h>
 #include <grub/fs.h>
 #include <grub/file.h>
+#include <grub/video.h>
 
 GRUB_MOD_LICENSE ("GPLv3+");
 
@@ -414,8 +415,23 @@ func_out:
    
 }
 
+static grub_err_t
+miray_cmd_check_fbaddr(grub_extcmd_context_t ctxt __attribute__ ((unused)),
+                     int argc __attribute__ ((unused)),
+                     char **args __attribute__ ((unused)) )
+{
+   #if GRUB_CPU_SIZEOF_VOID_P == 8
+   if ((grub_uint64_t) grub_get_fb() > 0xFFFFFFFFu)
+   {
+      return grub_error(GRUB_ERR_TEST_FAILURE, N_("false"));
+   }
+   #endif
 
-static grub_extcmd_t cmd_bootdev, cmd_tolower, cmd_acpi2, cmd_smbios, cmd_load_cliconf;
+   return GRUB_ERR_NONE;
+}
+
+
+static grub_extcmd_t cmd_bootdev, cmd_tolower, cmd_acpi2, cmd_smbios, cmd_load_cliconf, cmd_check_fbaddr;
 
 // Legacy command names
 static grub_extcmd_t l_cmd_dev;
@@ -438,6 +454,9 @@ GRUB_MOD_INIT(boothelper)
    cmd_load_cliconf = grub_register_extcmd ("miray_load_cliconf", miray_cmd_load_cliconf,
 				    0, 0, N_("Set cli configuration to variable"), options_load_cliconf);
 
+   cmd_check_fbaddr = grub_register_extcmd ("miray_check_fbaddr", miray_cmd_check_fbaddr,
+				    0, 0, N_("Check if framebuffer is addressable with 32 bit"), 0);
+
 
    // Register legacy command names
    l_cmd_dev = grub_register_extcmd ("bootdev", miray_cmd_bootdev,
@@ -451,6 +470,7 @@ GRUB_MOD_FINI(boothelper)
    grub_unregister_extcmd(cmd_acpi2);
    grub_unregister_extcmd(cmd_smbios);
    grub_unregister_extcmd(cmd_load_cliconf);
+   grub_unregister_extcmd(cmd_check_fbaddr);
 
    // Unregister legacy command names
    grub_unregister_extcmd (l_cmd_dev);
