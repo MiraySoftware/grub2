@@ -123,3 +123,10 @@ miray_machine_smbios_ptr(void)
 {
    return 0; /* Currently not supported on BIOS */ 
 }
+
+
+void *
+miray_machine_smbios3_ptr(void)
+{
+   return 0; /* Currently not supported on BIOS */ 
+}

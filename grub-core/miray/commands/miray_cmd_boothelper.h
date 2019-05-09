@@ -29,4 +29,7 @@ miray_machine_bootdev(char * buffer, grub_size_t buffer_size);
 void *
 miray_machine_smbios_ptr(void);
 
+void *
+miray_machine_smbios3_ptr(void);
+
 #endif

@@ -178,6 +178,33 @@ miray_cmd_smbios (grub_extcmd_context_t ctxt,
    return GRUB_ERR_NONE;   
 }
 
+static grub_err_t
+miray_cmd_smbios3 (grub_extcmd_context_t ctxt,
+                   int argc __attribute__ ((unused)),
+                   char **args __attribute__ ((unused)))
+{
+   struct grub_arg_list *state = ctxt->state;
+   const char * env_key = "smbios3_start";
+   
+   char buffer[SMBIOS_BUFFER_SIZE + 1];
+
+   void * ptr = 0;
+
+   if (state[0].set)
+      env_key = state[0].arg;
+
+   ptr = miray_machine_smbios3_ptr();
+
+   if (ptr == 0)
+      return grub_error(GRUB_ERR_TEST_FAILURE, "SMBIOS3 not supported");
+
+   grub_snprintf(buffer, SMBIOS_BUFFER_SIZE, "%p", (void *)ptr);
+   
+   grub_env_set(env_key, buffer);
+
+   return GRUB_ERR_NONE;   
+}
+
 
 static const struct grub_arg_option options_load_cliconf[] =
 {
@@ -431,7 +458,7 @@ miray_cmd_check_fbaddr(grub_extcmd_context_t ctxt __attribute__ ((unused)),
 }
 
 
-static grub_extcmd_t cmd_bootdev, cmd_tolower, cmd_acpi2, cmd_smbios, cmd_load_cliconf, cmd_check_fbaddr;
+static grub_extcmd_t cmd_bootdev, cmd_tolower, cmd_acpi2, cmd_smbios, cmd_smbios3, cmd_load_cliconf, cmd_check_fbaddr;
 
 // Legacy command names
 static grub_extcmd_t l_cmd_dev;
@@ -448,6 +475,9 @@ GRUB_MOD_INIT(boothelper)
 				   0, 0, N_("Set acpi2 addres to variable"), options_acpi2);
 
    cmd_smbios = grub_register_extcmd ("miray_smbios", miray_cmd_smbios,
+				    0, 0, N_("Set smbios addres to variable"), options_smbios);
+
+   cmd_smbios3 = grub_register_extcmd ("miray_smbios3", miray_cmd_smbios3,
 				    0, 0, N_("Set smbios addres to variable"), options_smbios);
 
 
@@ -469,6 +499,7 @@ GRUB_MOD_FINI(boothelper)
    grub_unregister_extcmd(cmd_tolower);
    grub_unregister_extcmd(cmd_acpi2);
    grub_unregister_extcmd(cmd_smbios);
+   grub_unregister_extcmd(cmd_smbios3);
    grub_unregister_extcmd(cmd_load_cliconf);
    grub_unregister_extcmd(cmd_check_fbaddr);
 

@@ -100,6 +100,10 @@ miray_machine_bootdev(char * buffer, grub_size_t buffer_size)
 
 
 static grub_efi_packed_guid_t smbios_guid = GRUB_EFI_SMBIOS_TABLE_GUID;
+static grub_efi_packed_guid_t smbios3_guid = \
+  { 0xf2fd1544, 0x9794, 0x4a2c, \
+    { 0x99, 0x2e, 0xe5, 0xbb, 0xcf, 0x20, 0xe3, 0x94 } \
+  };
 
 void *
 miray_machine_smbios_ptr(void)
@@ -117,6 +121,29 @@ miray_machine_smbios_ptr(void)
       {
          smbios = grub_efi_system_table->configuration_table[i].vendor_table;
          grub_dprintf ("efi", "SMBIOS: %p\n", smbios);
+      }
+   }
+
+   return smbios;
+}
+
+
+void *
+miray_machine_smbios3_ptr(void)
+{
+   /* this method is based on loadbios.c */ 
+   
+   void * smbios = 0;
+   unsigned i;
+
+   for (i = 0; i < grub_efi_system_table->num_table_entries; i++)
+   {
+      grub_efi_packed_guid_t *guid = &grub_efi_system_table->configuration_table[i].vendor_guid;
+
+      if (! grub_memcmp (guid, &smbios3_guid, sizeof (grub_efi_guid_t)))
+      {
+         smbios = grub_efi_system_table->configuration_table[i].vendor_table;
+         grub_dprintf ("efi", "SMBIOS3: %p\n", smbios);
       }
    }
 
