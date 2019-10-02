@@ -417,6 +417,14 @@ grub_net_process_dhcp_ack (struct grub_net_network_level_interface *inter,
       grub_print_error ();
     }
 
+  if (device && (bp->server_ip || server_name))
+  {
+    if (*device)
+      grub_free(*device);
+
+    *device = 0;
+  }
+
   if (device && !*device && bp->server_ip)
   {
     *device = grub_xasprintf ("tftp,%s", server_ip);
@@ -534,7 +542,7 @@ grub_net_configure_by_dhcp_ack (const char *name,
   grub_net_network_level_address_t addr;
   grub_net_link_level_address_t hwaddr;
   struct grub_net_network_level_interface *inter;
-  char server_ip[sizeof ("xxx.xxx.xxx.xxx")];
+  /* char server_ip[sizeof ("xxx.xxx.xxx.xxx")]; */
 
   addr.type = GRUB_NET_NETWORK_LEVEL_PROTOCOL_IPV4;
   addr.ipv4 = bp->your_ip;
@@ -597,6 +605,7 @@ grub_net_configure_by_dhcp_ack (const char *name,
     }
   #endif
 
+#if 0
   if (is_def)
     grub_net_default_server = 0;
   if (is_def && !grub_net_default_server && bp->server_ip)
@@ -604,11 +613,13 @@ grub_net_configure_by_dhcp_ack (const char *name,
       grub_net_default_server = grub_strdup (server_ip);
       grub_print_error ();
     }
+#endif
 
   if (is_def)
     {
       grub_env_set ("net_default_interface", name);
       grub_env_export ("net_default_interface");
+      grub_net_default_server = 0;
     }
 
 #if 0
