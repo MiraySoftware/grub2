@@ -1473,6 +1473,7 @@ typedef struct grub_efi_pxe_mode
   grub_uint8_t make_callbacks;
   grub_uint8_t ttl;
   grub_uint8_t tos;
+  grub_uint8_t unused;
   grub_efi_ip_address_t station_ip;
   grub_efi_ip_address_t subnet_mask;
   grub_efi_pxe_packet_t dhcp_discover;
