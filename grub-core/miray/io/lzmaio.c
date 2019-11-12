@@ -157,7 +157,10 @@ grub_lzmaio_open (grub_file_t io, enum grub_file_type type __attribute__ ((unuse
    grub_lzmaio_p lzmaio;
    SRes res;
 
-   file = (grub_file_t) grub_malloc (sizeof (*file));
+   if (type & GRUB_FILE_TYPE_NO_DECOMPRESS)
+      return io;
+
+   file = (grub_file_t) grub_zalloc (sizeof (*file));
    if (! file)
    {
       grub_error (GRUB_ERR_OUT_OF_MEMORY, "Out of memory");
@@ -181,10 +184,14 @@ grub_lzmaio_open (grub_file_t io, enum grub_file_type type __attribute__ ((unuse
    file->fs = &grub_lzmaio_fs;
    file->not_easily_seekable = 1;
 
+   if (grub_file_tell (lzmaio->file) != 0)
+      grub_file_seek (lzmaio->file, 0);
+   
    lzmaio->inbuf_len = grub_file_read (io, lzmaio->inbuf, INBUFSIZE);
    if (lzmaio->inbuf_len < HEADERSIZE)
    {
       grub_dprintf("filter", "inbug_len < HEADERSIZE");
+      grub_errno = GRUB_ERR_NONE;
       grub_free (file);
       grub_free (lzmaio);
       grub_file_seek (io, 0);
@@ -200,7 +207,8 @@ grub_lzmaio_open (grub_file_t io, enum grub_file_type type __attribute__ ((unuse
    res = LzmaDec_Allocate(&lzmaio->state, lzmaio->header, LZMA_PROPS_SIZE, &g_Alloc);
    if (res != SZ_OK)
    {
-      grub_dprintf("filter", "res != SZ_OK");
+      grub_dprintf("filter", "res != SZ_OK\n");
+      grub_errno = GRUB_ERR_NONE;
       LzmaDec_Free(&lzmaio->state, &g_Alloc);
       grub_free (file);
       grub_free (lzmaio);
@@ -213,6 +221,7 @@ grub_lzmaio_open (grub_file_t io, enum grub_file_type type __attribute__ ((unuse
    if (!is_lzma_file(file))
    {
       grub_dprintf("filter", "!is_lzma_file");
+      grub_errno = GRUB_ERR_NONE;
       LzmaDec_Free(&lzmaio->state, &g_Alloc);
       grub_free (file);
       grub_free (lzmaio);
