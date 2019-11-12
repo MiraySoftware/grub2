@@ -457,8 +457,35 @@ miray_cmd_check_fbaddr(grub_extcmd_context_t ctxt __attribute__ ((unused)),
    return GRUB_ERR_NONE;
 }
 
+static grub_err_t
+miray_cmd_test_file(struct grub_command *cmd __attribute__ ((unused)),
+                    int argc, char **args)
+{
+   // This method allows to test for files even if the directory does not support iterating over a directory
+
+   grub_file_t f;
+
+   if (argc < 1) return grub_error(GRUB_ERR_BAD_ARGUMENT, "Argument missing");
+
+   // Don't try to decompress or check signatures
+   // We only want to check if the file exists
+   f = grub_file_open(args[0], GRUB_FILE_TYPE_NONE | GRUB_FILE_TYPE_NO_DECOMPRESS | GRUB_FILE_TYPE_SKIP_SIGNATURE);
+
+   if (f != NULL)
+   {
+      grub_file_close(f);
+      return GRUB_ERR_NONE;
+   }
+   else
+   {
+      return grub_error(GRUB_ERR_TEST_FAILURE, "Could not open");
+   }
+}
+
 
 static grub_extcmd_t cmd_bootdev, cmd_tolower, cmd_acpi2, cmd_smbios, cmd_smbios3, cmd_load_cliconf, cmd_check_fbaddr;
+
+static grub_command_t cmd_test_file;
 
 // Legacy command names
 static grub_extcmd_t l_cmd_dev;
@@ -487,6 +514,9 @@ GRUB_MOD_INIT(boothelper)
    cmd_check_fbaddr = grub_register_extcmd ("miray_check_fbaddr", miray_cmd_check_fbaddr,
 				    0, 0, N_("Check if framebuffer is addressable with 32 bit"), 0);
 
+   cmd_test_file = grub_register_command("miray_test_file",
+				      miray_cmd_test_file,
+				      0, N_("Test if a file exists"));
 
    // Register legacy command names
    l_cmd_dev = grub_register_extcmd ("bootdev", miray_cmd_bootdev,
@@ -502,6 +532,8 @@ GRUB_MOD_FINI(boothelper)
    grub_unregister_extcmd(cmd_smbios3);
    grub_unregister_extcmd(cmd_load_cliconf);
    grub_unregister_extcmd(cmd_check_fbaddr);
+
+   grub_unregister_command(cmd_test_file);
 
    // Unregister legacy command names
    grub_unregister_extcmd (l_cmd_dev);
