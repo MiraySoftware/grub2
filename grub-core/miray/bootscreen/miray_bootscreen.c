@@ -33,9 +33,6 @@
 #include "miray_screen.h"
 
 
-static const int boot_next_entry = 1;
-static const int boot_symobi_entry = 0;
-
 #ifndef GRUB_TERM_DISP_HLINE
 #define GRUB_TERM_DISP_HLINE GRUB_UNICODE_HLINE
 #endif
