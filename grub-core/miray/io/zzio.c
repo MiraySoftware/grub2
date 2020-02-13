@@ -30,8 +30,10 @@ static const grub_uint16_t zzMagic = 0x5A5A; /* 'ZZ' */
 
 static const grub_uint8_t zzMaskMode = 0x0F;
 
+#if 0 /* Values currently not needed */
 static const grub_uint8_t zzModeNone = 0; /* invalid */
 static const grub_uint8_t zzModeDeflate = 1;
+#endif
 static const grub_uint8_t zzModeLZMA = 2;
 
 struct zzHeader
