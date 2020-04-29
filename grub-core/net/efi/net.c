@@ -1446,7 +1446,12 @@ grub_net_efi_get_net_handle (struct grub_net * net)
   if (!ifc->dev)
     return 0;
 
-  return ifc->dev->handle;
+  if (ifc->dev->ip4_pxe_handle)
+    return ifc->dev->ip4_pxe_handle;
+  else if (ifc->dev->ip6_pxe_handle)
+    return ifc->dev->ip6_pxe_handle;
+  else
+    return ifc->dev->handle;
 }
 
 grub_command_func_t grub_efi_net_list_routes = grub_cmd_efi_listroutes;
