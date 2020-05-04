@@ -1493,10 +1493,113 @@ grub_efi_net_restore_hw (void)
   return GRUB_ERR_NONE;
 }
 
+
+static grub_err_t
+grub_cmd_copypxereply (struct grub_command *cmd __attribute__ ((unused)),
+		       int argc __attribute__ ((unused)), char **args __attribute__ ((unused)))
+{
+  struct grub_efi_net_device *dev;
+
+  for (dev = net_devices; dev; dev = dev->next)
+    {
+      if (dev->ip4_pxe && dev->ip4_pxe->mode->pxe_reply_received)
+      {
+        grub_efi_pxe_t *pxe = dev->ip4_pxe;
+        grub_efi_pxe_mode_t *mode = pxe->mode;
+
+        // Adjust dhcp packets after selection in a boot menu
+
+        if (mode->proxy_offer_received)
+        {
+          // We have a proxy offer, replace it with the pxe_reply
+          efi_call_13 (pxe->setpackets, pxe,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       &mode->pxe_reply,
+                       NULL,
+                       NULL,
+                       NULL);
+        }
+        else if (mode->dhcp_ack_received)
+        {
+          // We have a dhcp offer, replace it with the pxe_reply
+          efi_call_13 (pxe->setpackets, pxe,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       &mode->pxe_reply,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL);
+        }
+      }
+
+      if (dev->ip6_pxe && dev->ip6_pxe->mode->pxe_reply_received)
+      {
+        grub_efi_pxe_t *pxe = dev->ip6_pxe;
+        grub_efi_pxe_mode_t *mode = pxe->mode;
+
+        // Adjust dhcp packets after selection in a boot menu
+
+        if (mode->proxy_offer_received)
+        {
+          // We have a proxy offer, replace it with the pxe_reply
+          efi_call_13 (pxe->setpackets, pxe,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       &mode->pxe_reply,
+                       NULL,
+                       NULL,
+                       NULL);
+        }
+        else if (mode->dhcp_ack_received)
+        {
+          // We have a dhcp offer, replace it with the pxe_reply
+          efi_call_13 (pxe->setpackets, pxe,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       &mode->pxe_reply,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL);
+        }
+      }
+
+    }
+
+  return GRUB_ERR_NONE;
+}
+
+
 grub_command_func_t grub_efi_net_list_routes = grub_cmd_efi_listroutes;
 grub_command_func_t grub_efi_net_list_cards = grub_cmd_efi_listcards;
 grub_command_func_t grub_efi_net_list_addrs = grub_cmd_efi_listaddrs;
 grub_command_func_t grub_efi_net_add_addr = grub_cmd_efi_addaddr;
+
+static grub_command_t cmd_copypxereply;
 
 int
 grub_efi_net_fs_init ()
@@ -1527,12 +1630,17 @@ grub_efi_net_fs_init ()
   grub_env_set ("grub_netfs_type", "efi");
   grub_register_variable_hook ("grub_netfs_type", 0, grub_env_write_readonly);
   grub_env_export ("grub_netfs_type");
+
+  cmd_copypxereply = grub_register_command ("net_pxe_copyreply", grub_cmd_copypxereply,
+					    "", "");
   return 1;
 }
 
 void
 grub_efi_net_fs_fini (void)
 {
+  grub_unregister_command(cmd_copypxereply);
+
   grub_env_unset ("grub_netfs_type");
   grub_efi_net_unset_interface_vars ();
   grub_register_variable_hook ("net_default_server", 0, 0);
