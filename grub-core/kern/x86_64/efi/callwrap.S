@@ -127,3 +127,29 @@ FUNCTION(efi_wrap_10)
 	call *%rdi
 	addq $88, %rsp
 	ret
+
+FUNCTION(efi_wrap_13)
+	subq $88, %rsp
+	mov 88+64(%rsp), %rax
+	mov %rax, 96(%rsp)
+	mov 88+56(%rsp), %rax
+	mov %rax, 88(%rsp)
+	mov 88+48(%rsp), %rax
+	mov %rax, 80(%rsp)
+	mov 88+40(%rsp), %rax
+	mov %rax, 72(%rsp)
+	mov 88+32(%rsp), %rax
+	mov %rax, 64(%rsp)
+	mov 88+24(%rsp), %rax
+	mov %rax, 56(%rsp)
+	mov 88+16(%rsp), %rax
+	mov %rax, 48(%rsp)
+	mov 88+8(%rsp), %rax
+	mov %rax, 40(%rsp)
+	mov %r9, 32(%rsp)
+	mov %r8, %r9
+	mov %rcx, %r8
+	mov %rsi, %rcx
+	call *%rdi
+	addq $88, %rsp
+	ret

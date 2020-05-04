@@ -1650,7 +1650,19 @@ typedef struct grub_efi_pxe
 			    grub_efi_pxe_ip_address_t *new_station_ip,
 			    grub_efi_pxe_ip_address_t *new_subnet_mask);
   //void (*setstationip) (void);
-  void (*setpackets) (void);
+  grub_efi_status_t (*setpackets) (struct grub_efi_pxe *this,
+                                   grub_efi_boolean_t *new_dhcp_discover_valid,
+                                   grub_efi_boolean_t *new_dhcp_ack_received,
+                                   grub_efi_boolean_t *new_proxy_offer_received,
+                                   grub_efi_boolean_t *new_pxe_discover_valid,
+                                   grub_efi_boolean_t *new_pxe_reply_received,
+                                   grub_efi_boolean_t *new_pxe_bis_reply_received,
+                                   grub_efi_pxe_packet_t *new_dhcp_discover,
+                                   grub_efi_pxe_packet_t *new_dhcp_ack,
+                                   grub_efi_pxe_packet_t *new_proxy_offer,
+                                   grub_efi_pxe_packet_t *new_pxe_discover,
+                                   grub_efi_pxe_packet_t *new_pxe_reply,
+                                   grub_efi_pxe_packet_t *neW_pxe_bis_reply);
   struct grub_efi_pxe_mode *mode;
 } grub_efi_pxe_t;
 
@@ -2052,6 +2064,7 @@ typedef struct grub_efi_ip6_config_manual_address grub_efi_ip6_config_manual_add
 #define efi_call_6(func, a, b, c, d, e, f) func(a, b, c, d, e, f)
 #define efi_call_7(func, a, b, c, d, e, f, g) func(a, b, c, d, e, f, g)
 #define efi_call_10(func, a, b, c, d, e, f, g, h, i, j)	func(a, b, c, d, e, f, g, h, i, j)
+#define efi_call_13(func, a, b, c, d, e, f, g, h, i, j, k, l, m)	func(a, b, c, d, e, f, g, h, i, j, k, l, m)
 
 #else
 
@@ -2083,6 +2096,12 @@ typedef struct grub_efi_ip6_config_manual_address grub_efi_ip6_config_manual_add
 	      (grub_uint64_t) (c), (grub_uint64_t) (d), (grub_uint64_t) (e), \
 	      (grub_uint64_t) (f), (grub_uint64_t) (g),	(grub_uint64_t) (h), \
 	      (grub_uint64_t) (i), (grub_uint64_t) (j))
+#define efi_call_13(func, a, b, c, d, e, f, g, h, i, j, k, l, m) \
+  efi_wrap_13(func, (grub_uint64_t) (a), (grub_uint64_t) (b), \
+	      (grub_uint64_t) (c), (grub_uint64_t) (d), (grub_uint64_t) (e), \
+	      (grub_uint64_t) (f), (grub_uint64_t) (g),	(grub_uint64_t) (h), \
+	      (grub_uint64_t) (i), (grub_uint64_t) (j), (grub_uint64_t) (k), \
+              (grub_uint64_t) (l), (grub_uint64_t) (m))
 
 grub_uint64_t EXPORT_FUNC(efi_wrap_0) (void *func);
 grub_uint64_t EXPORT_FUNC(efi_wrap_1) (void *func, grub_uint64_t arg1);
@@ -2110,6 +2129,13 @@ grub_uint64_t EXPORT_FUNC(efi_wrap_10) (void *func, grub_uint64_t arg1,
                                         grub_uint64_t arg6, grub_uint64_t arg7,
                                         grub_uint64_t arg8, grub_uint64_t arg9,
                                         grub_uint64_t arg10);
+grub_uint64_t EXPORT_FUNC(efi_wrap_13) (void *func, grub_uint64_t arg1,
+                                        grub_uint64_t arg2, grub_uint64_t arg3,
+                                        grub_uint64_t arg4, grub_uint64_t arg5,
+                                        grub_uint64_t arg6, grub_uint64_t arg7,
+                                        grub_uint64_t arg8, grub_uint64_t arg9,
+                                        grub_uint64_t arg10, grub_uint64_t arg11,
+                                        grub_uint64_t arg12, grub_uint64_t arg13);
 #endif
 
 #endif /* ! GRUB_EFI_API_HEADER */
