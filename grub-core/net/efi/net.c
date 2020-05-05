@@ -1593,6 +1593,87 @@ grub_cmd_copypxereply (struct grub_command *cmd __attribute__ ((unused)),
   return GRUB_ERR_NONE;
 }
 
+static void adjust_pxe_v4_packet_bootname(grub_efi_pxe_packet_t * out, grub_efi_pxe_packet_t * in, char * name, grub_size_t namelen)
+{
+  grub_memcpy(out, in, 1472);
+  grub_memset(&out[108], 0, 128);
+  grub_memcpy(&out[108], name, namelen);
+}
+
+static grub_err_t
+grub_cmd_pxesetbname (struct grub_command *cmd __attribute__ ((unused)),
+		       int argc, char **args)
+{
+  struct grub_efi_net_device *dev;
+  grub_efi_pxe_packet_t * packet;
+  char * name;
+  grub_size_t namelen;
+
+  if (argc != 1)
+    return grub_error(GRUB_ERR_BAD_ARGUMENT, "Invalid parameter");
+
+  name = args[0];
+  namelen = grub_strlen(name);
+
+  if (namelen > 128)
+    return grub_error(GRUB_ERR_BAD_ARGUMENT, "Name too long");
+
+  packet = grub_malloc(1472);
+  if (!packet)
+    return grub_error(GRUB_ERR_OUT_OF_MEMORY, "Out of memory");
+
+  for (dev = net_devices; dev; dev = dev->next)
+    {
+      if (dev->ip4_pxe && dev->ip4_pxe->mode->pxe_reply_received)
+      {
+        grub_efi_pxe_t *pxe = dev->ip4_pxe;
+        grub_efi_pxe_mode_t *mode = pxe->mode;
+
+        if (mode->proxy_offer_received)
+        {
+          adjust_pxe_v4_packet_bootname(packet, &mode->proxy_offer, name, namelen);
+
+          efi_call_13 (pxe->setpackets, pxe,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       packet,
+                       NULL,
+                       NULL,
+                       NULL);
+        }
+        else if (mode->dhcp_ack_received)
+        {
+          adjust_pxe_v4_packet_bootname(packet, &mode->dhcp_ack, name, namelen);
+
+          efi_call_13 (pxe->setpackets, pxe,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
+                       packet,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL);
+        }
+      }
+
+      // TODO: Handle ipv6
+    }
+
+  grub_free(packet);
+  return GRUB_ERR_NONE;
+}
+
 
 grub_command_func_t grub_efi_net_list_routes = grub_cmd_efi_listroutes;
 grub_command_func_t grub_efi_net_list_cards = grub_cmd_efi_listcards;
@@ -1600,6 +1681,7 @@ grub_command_func_t grub_efi_net_list_addrs = grub_cmd_efi_listaddrs;
 grub_command_func_t grub_efi_net_add_addr = grub_cmd_efi_addaddr;
 
 static grub_command_t cmd_copypxereply;
+static grub_command_t cmd_setpxebname;
 
 int
 grub_efi_net_fs_init ()
@@ -1633,6 +1715,9 @@ grub_efi_net_fs_init ()
 
   cmd_copypxereply = grub_register_command ("net_pxe_copyreply", grub_cmd_copypxereply,
 					    "", "");
+  cmd_setpxebname = grub_register_command ("net_pxe_setbname", grub_cmd_pxesetbname,
+					    "", "");
+
   return 1;
 }
 
@@ -1640,6 +1725,7 @@ void
 grub_efi_net_fs_fini (void)
 {
   grub_unregister_command(cmd_copypxereply);
+  grub_unregister_command(cmd_setpxebname);
 
   grub_env_unset ("grub_netfs_type");
   grub_efi_net_unset_interface_vars ();
