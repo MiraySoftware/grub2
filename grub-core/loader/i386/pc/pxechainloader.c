@@ -59,7 +59,10 @@ grub_pxechain_boot (void)
   };
   struct grub_net_bootp_packet *bp;
 
-  bp = grub_pxe_get_cached (GRUB_PXENV_PACKET_TYPE_DHCP_ACK);
+  bp = grub_pxe_get_cached (GRUB_PXENV_PACKET_TYPE_CACHED_REPLY);
+
+  if (!bp)
+    bp = grub_pxe_get_cached (GRUB_PXENV_PACKET_TYPE_DHCP_ACK);
 
   grub_video_set_mode ("text", 0, 0);
 
