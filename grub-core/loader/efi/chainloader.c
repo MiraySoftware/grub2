@@ -430,10 +430,13 @@ grub_cmd_chainloader (grub_command_t cmd __attribute__ ((unused)),
 }
 
 static grub_command_t cmd;
+static grub_command_t cmdpxe;
 
 GRUB_MOD_INIT(chainloader)
 {
   cmd = grub_register_command ("chainloader", grub_cmd_chainloader,
+			       0, N_("Load another boot loader."));
+  cmdpxe = grub_register_command ("pxechainloader", grub_cmd_chainloader,
 			       0, N_("Load another boot loader."));
   my_mod = mod;
 }
@@ -441,4 +444,5 @@ GRUB_MOD_INIT(chainloader)
 GRUB_MOD_FINI(chainloader)
 {
   grub_unregister_command (cmd);
+  grub_unregister_command (cmdpxe);
 }
