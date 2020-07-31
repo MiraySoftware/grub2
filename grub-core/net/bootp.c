@@ -553,6 +553,39 @@ boot_file:
   opt = find_dhcp_option (bp, size, GRUB_NET_BOOTP_EXTENSIONS_PATH, &opt_len);
   if (opt && opt_len)
     grub_env_set_net_property (inter->name, "extensionspath", (const char *) opt, opt_len);
+
+  opt = find_dhcp_option (bp, size, GRUB_NET_BOOTP_CLIENT_ID, &opt_len);
+  if (opt && opt_len)
+    grub_env_set_net_property (inter->name, "clientid", (const char *) opt, opt_len);
+
+  opt = find_dhcp_option (bp, size, GRUB_NET_BOOTP_CLIENT_UUID, &opt_len);
+  if (opt && opt_len == 17)
+    {
+      /* The format is 9cfe245e-d0c8-bd45-a79f-54ea5fbd3d97 */
+      char *val;
+      int i, j = 0;
+
+      opt += 1;
+      opt_len -= 1;
+
+      val = grub_malloc (2 * opt_len + 4 + 1);
+      if (!val)
+          return; /* inter; */
+
+      for (i = 0; i < opt_len; i++)
+        {
+          val[2 * i + j] = hexdigit (opt[i] >> 4);
+          val[2 * i + 1 + j] = hexdigit (opt[i] & 0xf);
+
+          if ((i == 3) || (i == 5) || (i == 7) || (i == 9))
+            {
+              j++;
+              val[2 * i + 1+ j] = '-';
+            }
+        }
+      grub_env_set_net_property (inter->name, "clientuuid", (char *) val, 2 * opt_len + 4);
+      grub_free (val);
+    }
 }
 
 struct grub_net_network_level_interface *
@@ -752,7 +785,8 @@ grub_net_configure_by_dhcp_ack (const char *name,
   #endif
 
   grub_net_process_dhcp_ack (inter, bp, size, is_def, device, path);
-  
+
+#if 0
   opt = find_dhcp_option (bp, size, GRUB_NET_BOOTP_CLIENT_ID, &opt_len);
   if (opt && opt_len)
     grub_env_set_net_property (name, "clientid", (const char *) opt, opt_len);
@@ -785,6 +819,7 @@ grub_net_configure_by_dhcp_ack (const char *name,
       grub_env_set_net_property (name, "clientuuid", (char *) val, 2 * opt_len + 4);
       grub_free (val);
     }
+#endif
 
   inter->dhcp_ack = grub_malloc (size);
   if (inter->dhcp_ack)
