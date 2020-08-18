@@ -156,16 +156,45 @@ grub_cmd_pxechain (grub_command_t cmd __attribute__ ((unused)),
   return grub_errno;
 }
 
+static grub_err_t
+grub_cmd_pxesetbname (struct grub_command *cmd __attribute__ ((unused)),
+		       int argc, char **args)
+{
+  char * name;
+  grub_size_t namelen;
+
+  if (argc != 1)
+    return grub_error(GRUB_ERR_BAD_ARGUMENT, "Invalid parameter");
+
+  name = args[0];
+  namelen = grub_strlen(name);
+
+  if (namelen > 128)
+    return grub_error(GRUB_ERR_BAD_ARGUMENT, "Name too long");
+
+  grub_memset(boot_file, 0, sizeof (boot_file));
+  grub_memcpy (boot_file, name, namelen);
+
+  return GRUB_ERR_NONE;
+}
+
+
 static grub_command_t cmd;
+static grub_command_t cmd_setpxebname;
 
 GRUB_MOD_INIT(pxechainloader)
 {
   cmd = grub_register_command ("pxechainloader", grub_cmd_pxechain,
 			       0, N_("Load a PXE image."));
+
+  cmd_setpxebname = grub_register_command ("net_pxe_setbname", grub_cmd_pxesetbname,
+					    "", "");
+
   my_mod = mod;
 }
 
 GRUB_MOD_FINI(pxechainloader)
 {
+  grub_unregister_command(cmd_setpxebname);
   grub_unregister_command (cmd);
 }
