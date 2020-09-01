@@ -449,7 +449,7 @@ grub_video_gop_setup (unsigned int width, unsigned int height,
 	  grub_dprintf ("video", "GOP: mode %d: %dx%d\n", mode, info->width,
 			info->height);
 
-	  if (preferred_width && (info->width > preferred_width
+	  if (!canKeep && preferred_width && (info->width > preferred_width
 				  || info->height > preferred_height))
 	    {
 	      grub_dprintf ("video", "GOP: mode %d: too large\n", mode);
@@ -495,6 +495,7 @@ grub_video_gop_setup (unsigned int width, unsigned int height,
 	    if (info->width == preferred_width && info->height == preferred_height)
 	    {
 	      best_mode = mode;
+	      found = 1;
 	      break;
 	    }
 	  }
