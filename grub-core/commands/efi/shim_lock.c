@@ -137,10 +137,12 @@ GRUB_MOD_INIT(shim_lock)
   if (!sl && !grub_efi_secure_boot())
     return;
 
+  grub_efi_set_shim_lock_active(1);
   grub_dl_set_persistent (mod);
 }
 
 GRUB_MOD_FINI(shim_lock)
 {
+  grub_efi_set_shim_lock_active(0);
   grub_verifier_unregister (&shim_lock);
 }
