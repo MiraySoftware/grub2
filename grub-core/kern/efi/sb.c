@@ -25,8 +25,6 @@
 #include <grub/efi/linux.h>
 #include <grub/efi/sb.h>
 
-int shim_lock_acitve = 0;
-
 int
 grub_efi_secure_boot (void)
 {
@@ -64,16 +62,3 @@ grub_efi_secure_boot (void)
   return 0;
 #endif
 }
-
-void
-grub_efi_set_shim_lock_active(int val)
-{
-   shim_lock_acitve = val;
-}
-
-int
-grub_efi_is_shim_lock_active()
-{
-   return shim_lock_acitve;
-}
-

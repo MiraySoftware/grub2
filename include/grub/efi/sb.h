@@ -26,7 +26,4 @@
 /* Functions.  */
 int EXPORT_FUNC (grub_efi_secure_boot) (void);
 
-void EXPORT_FUNC (grub_efi_set_shim_lock_active) (int val);
-int EXPORT_FUNC (grub_efi_is_shim_lock_active) (void);
-
 #endif /* ! GRUB_EFI_SB_HEADER */
