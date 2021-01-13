@@ -20,6 +20,7 @@
 
 #include <grub/dl.h>
 #include <grub/efi/efi.h>
+#include <grub/efi/sb.h>
 #include <grub/err.h>
 #include <grub/file.h>
 #include <grub/misc.h>
@@ -55,7 +56,7 @@ shim_lock_init (grub_file_t io, enum grub_file_type type,
 
   *flags = GRUB_VERIFY_FLAGS_SKIP_VERIFICATION;
 
-  if (!sl)
+  if (!sl && !grub_efi_secure_boot())
     return GRUB_ERR_NONE;
 
   switch (type & GRUB_FILE_TYPE_MASK)
@@ -112,6 +113,9 @@ shim_lock_init (grub_file_t io, enum grub_file_type type,
 static grub_err_t
 shim_lock_write (void *context __attribute__ ((unused)), void *buf, grub_size_t size)
 {
+  if (!sl)
+    return grub_error (GRUB_ERR_BAD_SIGNATURE, N_("no shim available in secure boot"));
+
   if (sl->verify (buf, size) != GRUB_EFI_SUCCESS)
     return grub_error (GRUB_ERR_BAD_SIGNATURE, N_("bad shim signature"));
 
@@ -130,13 +134,15 @@ GRUB_MOD_INIT(shim_lock)
   sl = grub_efi_locate_protocol (&shim_lock_guid, 0);
   grub_verifier_register (&shim_lock);
 
-  if (!sl)
+  if (!sl && !grub_efi_secure_boot())
     return;
 
+  grub_efi_set_shim_lock_active(1);
   grub_dl_set_persistent (mod);
 }
 
 GRUB_MOD_FINI(shim_lock)
 {
+  grub_efi_set_shim_lock_active(0);
   grub_verifier_unregister (&shim_lock);
 }

@@ -505,7 +505,7 @@ static grub_command_t cmd_multiboot, cmd_module;
 
 GRUB_MOD_INIT(multiboot)
 {
-  if (grub_efi_secure_boot())
+  if (grub_efi_secure_boot() && !grub_efi_is_shim_lock_active())
     return;
 
   cmd_multiboot =
@@ -528,7 +528,7 @@ GRUB_MOD_INIT(multiboot)
 
 GRUB_MOD_FINI(multiboot)
 {
-  if (grub_efi_secure_boot())
+  if (grub_efi_secure_boot() && !grub_efi_is_shim_lock_active())
     return;
 
   grub_unregister_command (cmd_multiboot);
